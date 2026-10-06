@@ -1,98 +1,100 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet } from 'react-native';
+import { RoundIconButton } from '@/shared/RoundIconButton';
+import { DiaryList } from '@/features/entry-list/DiaryList';
+import { GradientButton } from '@/shared/GradientButton';
+import { ScreenShell } from '@/shared/ScreenShell';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useEntries } from '@/hooks/useEntries';
+import * as Clipboard from 'expo-clipboard';
+import { formatEntriesForExport } from '@/utils/formatEntriesForExport';
+import { useCallback, useState } from 'react';
+import { Entry } from '@/types/Entries';
+import { entriesStorage } from '@/storage/entriesStorage';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+export default function DiaryScreen() {
+    const router = useRouter();
+    const { entries, removeEntries } = useEntries();
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+    const copyText = () => {
+        if (selectedItems.length > 0) {
+            Clipboard.setStringAsync(formatEntriesForExport(selectedItems));
+        } else {
+            Clipboard.setStringAsync(formatEntriesForExport(entries));
+        }
+    };
+    const [deleteMode, setDeleteMode] = useState(false);
+    const [selectedItems, setSelectedItems] = useState<Entry[]>([]);
+
+    useFocusEffect(
+        useCallback(() => {
+            return () => {
+                setDeleteMode(false);
+                setSelectedItems([]);
+            };
+        }, []),
     );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    return (
+        <ScreenShell
+            left={
+                <RoundIconButton
+                    icon={deleteMode ? 'delete' : 'calendar-today'}
+                    onPress={async () => {
+                        if (deleteMode) {
+                            await removeEntries(
+                                selectedItems.map((item) => item.id),
+                            );
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
+                            setSelectedItems([]);
+                            setDeleteMode(false);
+                        } else {
+                            router.push('/calendar');
+                        }
+                    }}
+                />
+            }
+            right={
+                <RoundIconButton
+                    icon="share-variant"
+                    onPress={() => {
+                        copyText();
+                    }}
+                />
+            }
+        >
+            <DiaryList
+                data={entries}
+                deleteMode={deleteMode}
+                setDeleteMode={setDeleteMode}
+                setSelectedItems={setSelectedItems}
+                selectedItems={selectedItems}
+            />
+            <GradientButton
+                text="Создать"
+                onPress={() => {
+                    router.push('/create-entry');
+                }}
+                style={styles.createBtn}
+            />
+        </ScreenShell>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+    root: { flex: 1 },
+    header: {
+        height: 72,
+        paddingHorizontal: 8,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    sheet: {
+        flex: 1,
+        paddingHorizontal: 18,
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 44,
+        borderTopRightRadius: 44,
+    },
+    createBtn: { marginVertical: 20 },
 });
