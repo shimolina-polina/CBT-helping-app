@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet } from 'react-native';
 import { FormField } from '@/shared/FormField';
 import { GradientButton } from '@/shared/GradientButton';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { entriesStorage } from '@/storage/entriesStorage';
 import { DateField } from '@/shared/DateField';
 import { Entry } from '@/types/Entries';
+import {formatDate} from "@/utils/formatDateTime";
 
 export type EntryForm = {
     createdAt: string; // ISO, дата записи
@@ -29,6 +30,48 @@ export default function CreateEntry({
         emotions: '',
         reactions: '',
     });
+    const isDirty = useMemo(() => {
+        if (entry) {
+            return (
+                form.situation !== entry.situation ||
+                form.emotions !== entry.emotions ||
+                form.thoughts !== entry.thoughts ||
+                form.reactions !== entry.reactions ||
+                formatDate(form.createdAt) !== formatDate(entry.createdAt)
+            );
+        } else {
+            return (
+                form.situation !== '' ||
+                form.emotions !== '' ||
+                form.thoughts !== '' ||
+                form.reactions !== '' ||
+                formatDate(form.createdAt) !== formatDate(new Date().toISOString())
+            );
+        }
+    }, [form, entry]);
+    const navigation = useNavigation();
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+            if (!isDirty) {
+                return;
+            }
+            e.preventDefault();
+            Alert.alert('Выйти?', 'Изменения не будут сохранены', [
+                {
+                    text: 'Остаться',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Выйти',
+                    style: 'destructive',
+                    onPress: () => navigation.dispatch(e.data.action),
+                },
+            ]);
+        });
+
+        return unsubscribe;
+    }, [navigation, isDirty]);
 
     useEffect(() => {
         if (!entry) return;
@@ -57,7 +100,7 @@ export default function CreateEntry({
                 await entriesStorage.add(form);
             }
 
-            router.back();
+            router.push('/');
         } catch {
             Alert.alert(
                 'Ошибка',

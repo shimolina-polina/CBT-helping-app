@@ -1,8 +1,8 @@
-import {Pressable, Text, StyleSheet, Animated, Easing} from 'react-native';
+import { Pressable, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { Entry } from '@/types/Entries';
-import { formatDynamicDate } from '@/utils/formatDateTime';
 import { useTheme } from '@/hooks/use-theme';
-import {useEffect, useRef} from "react";
+import { useEffect, useRef } from 'react';
+import {formatDate} from "@/utils/formatDateTime";
 
 type Props = {
     item: Entry;
@@ -63,30 +63,30 @@ export function DiaryListItem({
                 transform: [{ rotate }],
             }}
         >
-        <Pressable
-            onPress={() => onPress?.(item)}
-            onLongPress={() => {
-                onLongPress?.(item);
-            }}
-            style={({ pressed, hovered }) => [
-                styles.container,
-                { borderColor: colors.border },
-                pressed && { opacity: 0.7 },
-                hovered && { opacity: 0.9 },
-                isSelected && { opacity: 0.6 },
-            ]}
-        >
-            <Text
-                style={[styles.text, { color: colors.text }]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
+            <Pressable
+                onPress={() => onPress?.(item)}
+                onLongPress={() => {
+                    onLongPress?.(item);
+                }}
+                style={({ pressed, hovered }) => [
+                    styles.container,
+                    { borderColor: colors.border },
+                    pressed && { opacity: 0.7 },
+                    hovered && { opacity: 0.9 },
+                    isSelected && { opacity: 0.6 },
+                ]}
             >
-                {item.situation}
-            </Text>
-            <Text style={[styles.date, { color: colors.textSecondary }]}>
-                {formatDynamicDate(item.createdAt)}
-            </Text>
-        </Pressable>
+                <Text
+                    style={[styles.text, { color: colors.text }]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                >
+                    {item.situation}
+                </Text>
+                <Text style={[styles.date, { color: colors.textSecondary }]}>
+                    {formatDate(item.createdAt)}
+                </Text>
+            </Pressable>
         </Animated.View>
     );
 }

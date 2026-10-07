@@ -3,7 +3,7 @@ export type EntryForm = {
     thoughts: string;
     emotions: string;
     reactions: string;
-    createdAt: string
+    createdAt: string;
 };
 
 export type Entry = EntryForm & {
