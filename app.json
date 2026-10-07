@@ -2,7 +2,7 @@
     "expo": {
         "name": "cbt-helping-app",
         "slug": "cbt-helping-app",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "orientation": "portrait",
         "icon": "./assets/1f40a.png",
         "scheme": "cbthelpingapp",
@@ -17,7 +17,8 @@
                 "foregroundImage": "./assets/1f40a.png"
             },
             "predictiveBackGestureEnabled": false,
-            "package": "com.anonymous.cbthelpingapp"
+            "package": "com.anonymous.cbthelpingapp",
+            "versionCode": 2
         },
         "web": {
             "output": "static",
